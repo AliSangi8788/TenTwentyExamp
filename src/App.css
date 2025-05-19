@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+@theme {
+  --font-wroksans: Work Sans, "sans-serif";
+}
