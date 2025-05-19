@@ -68,7 +68,7 @@ const HeroSlider: React.FC = () => {
 
   return (
     <div>
-      <div className="relative w-full h-[900px] overflow-hidden">
+      <div className="relative w-full h-[600px] md:h-[900px] overflow-hidden">
         <div className="absolute top-4 left-4 right-4 inset-0 z-10">
           <Navbar />
         </div>
@@ -84,7 +84,6 @@ const HeroSlider: React.FC = () => {
             }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            // exit={{ opacity: 0 }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
           />
 
@@ -94,7 +93,6 @@ const HeroSlider: React.FC = () => {
             className="absolute inset-0"
             initial={{ clipPath: "inset(50% 0 50% 0)" }}
             animate={{ clipPath: "inset(0% 0 0% 0)" }}
-            // exit={{ clipPath: "inset(0% 0 0% 0)" }}
             transition={{ duration: 1.2, ease: "easeInOut" }}
             style={{
               backgroundImage: `url(${slides[current].image})`,
@@ -102,12 +100,12 @@ const HeroSlider: React.FC = () => {
               backgroundPosition: "center",
             }}
           >
-            <div className="w-full h-full flex items-center justify-start text-left text-white px-28">
-              <div className="w-[45%]">
-                <p className="font-wroksans font-normal leading-[140%] tracking-normal">
+            <div className="w-full h-full flex items-center justify-start text-left text-white px-4 md:px-28">
+              <div className="w-full md:w-[45%]">
+                <p className="font-wroksans font-normal leading-[140%] tracking-normal text-sm md:text-base">
                   {slides[current].subtitle}
                 </p>
-                <h1 className="font-wroksans text-[64px] font-normal leading-[140%] tracking-normal">
+                <h1 className="font-wroksans text-3xl md:text-[64px] font-normal leading-[140%] tracking-normal">
                   {slides[current].title}
                 </h1>
               </div>
@@ -116,14 +114,14 @@ const HeroSlider: React.FC = () => {
         </AnimatePresence>
 
         {/* Next Button with Smooth Progress Border */}
-        <div className="absolute bottom-16 left-28 z-10">
+        <div className="absolute bottom-8 md:bottom-16 left-4 md:left-28 z-10">
           <button
             type="button"
             onClick={handleNext}
-            className="relative w-[138px] h-[138px] text-black font-semibold rounded-none flex items-center justify-center cursor-pointer"
+            className="relative w-[100px] h-[100px] md:w-[138px] md:h-[138px] text-black font-semibold rounded-none flex items-center justify-center cursor-pointer"
           >
             <span
-              className={`font-wroksans text-white h-[96px] w-[96px] flex justify-center items-center bg-cover bg-center bg-no-repeat`}
+              className={`font-wroksans text-white h-[70px] w-[70px] md:h-[96px] md:w-[96px] flex justify-center items-center bg-cover bg-center bg-no-repeat text-sm md:text-base`}
               style={{
                 backgroundImage: `url(${
                   slides[(current + 1) % slides.length].image
@@ -152,10 +150,10 @@ const HeroSlider: React.FC = () => {
             />
           </button>
         </div>
-        <div className="absolute bottom-28 left-72 z-10 flex items-center gap-x-4">
-          <p className="font-wroksans text-[#EEF4F9]">0{current + 1}</p>
-          <div className="border-t border-[#EEF4F9] w-[103px]"></div>
-          <p className="font-wroksans text-[#EEF4F9]">0{slides.length}</p>
+        <div className="absolute bottom-16 md:bottom-28 left-16 md:left-72 z-10 flex items-center gap-x-4">
+          <p className="font-wroksans text-[#EEF4F9] text-sm md:text-base">0{current + 1}</p>
+          <div className="border-t border-[#EEF4F9] w-[60px] md:w-[103px]"></div>
+          <p className="font-wroksans text-[#EEF4F9] text-sm md:text-base">0{slides.length}</p>
         </div>
       </div>
     </div>

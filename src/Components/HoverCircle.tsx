@@ -1,4 +1,5 @@
-import React, { CSSProperties } from 'react';
+import React, { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 
 interface HoverCircleProps {
   isVisible: boolean;
@@ -6,12 +7,27 @@ interface HoverCircleProps {
 }
 
 const HoverCircle: React.FC<HoverCircleProps> = ({ isVisible, position }) => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
   const circleStyle: CSSProperties = {
     position: 'absolute',
     left: `${position.x}px`,
     top: `${position.y}px`,
-    width: '80px',
-    height: '80px',
+    width: isMobile ? '60px' : '80px',
+    height: isMobile ? '60px' : '80px',
     borderRadius: '50%',
     transform: 'translate(-50%, -50%)',
     pointerEvents: 'none',

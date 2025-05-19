@@ -133,8 +133,13 @@ const DragCarouselSlider: React.FC = () => {
     const position = index - currentIndex;
     const absPosition = Math.abs(position);
 
-    let translateX: number = position * 520; // Increased spacing for more margin
-    let scale: number = 1;
+    // Responsive spacing based on screen size
+    const baseTranslateX = window.innerWidth < 768 ? 320 : 520;
+    const baseMargin = window.innerWidth < 768 ? 30 : 50;
+    const baseScale = window.innerWidth < 768 ? 0.8 : 1;
+
+    let translateX: number = position * baseTranslateX;
+    let scale: number = baseScale;
     let zIndex: number = 0;
     let opacity: number = 1;
     let rotateY: number = 0;
@@ -142,21 +147,21 @@ const DragCarouselSlider: React.FC = () => {
 
     if (absPosition === 0) {
       // Center slide
-      scale = 1;
+      scale = baseScale;
       zIndex = 3;
       translateX += dragOffset;
     } else if (absPosition === 1) {
       // Adjacent slides - more pronounced rotation and margin
-      scale = 1;
+      scale = baseScale;
       zIndex = 2;
       opacity = 1;
-      rotateY = position > 0 ? 25 : -25; // Inverted Y rotation
-      rotateZ = position > 0 ? 10 : -10; // Inverted Z rotation for tilt
+      rotateY = position > 0 ? 25 : -25;
+      rotateZ = position > 0 ? 10 : -10;
       translateX += dragOffset * 0.5;
-      translateX += position > 0 ? 50 : -50;
+      translateX += position > 0 ? baseMargin : -baseMargin;
     } else if (absPosition === 2) {
       // Outer slides
-      scale = 0.65;
+      scale = baseScale * 0.65;
       zIndex = 1;
       opacity = 0.6;
       rotateY = position > 0 ? 35 : -35;
@@ -164,7 +169,7 @@ const DragCarouselSlider: React.FC = () => {
       translateX += dragOffset * 0.3;
     } else {
       // Hidden slides
-      scale = 0.5;
+      scale = baseScale * 0.5;
       zIndex = 0;
       opacity = 0;
       rotateY = position > 0 ? 45 : -45;
@@ -180,7 +185,7 @@ const DragCarouselSlider: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full h-[930px] overflow-hidden">
+    <div className="relative w-full h-[600px] md:h-[930px] overflow-hidden">
       {/* Carousel Container */}
       <div
         className="relative h-full flex items-center justify-center perspective-1000"
@@ -197,8 +202,8 @@ const DragCarouselSlider: React.FC = () => {
         {infiniteSlides.map((slide: Slide, index: number) => (
           <div
             key={`${slide.id}-${Math.floor(index / slides.length)}`}
-            className={`absolute top-20 w-[435px] h-[620px] select-none ${
-              index === currentIndex ? "" : "mt-28"
+            className={`absolute top-10 md:top-20 w-[280px] md:w-[435px] h-[400px] md:h-[620px] select-none ${
+              index === currentIndex ? "" : "mt-16 md:mt-28"
             }`}
             style={getSlideStyle(index)}
           >
@@ -212,16 +217,16 @@ const DragCarouselSlider: React.FC = () => {
       </div>
 
       {/* Slide Details - replacing indicators */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-center">
+      <div className="absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 text-center">
         {(() => {
           const normalizedIndex: number = currentIndex % slides.length;
           const currentSlide: Slide = slides[normalizedIndex];
           return (
-            <div className="p-6">
-              <h2 className="text-4xl font-wroksans text-black mb-2">
+            <div className="p-3 md:p-6">
+              <h2 className="text-2xl md:text-4xl font-wroksans text-black mb-1 md:mb-2">
                 {currentSlide.client}
               </h2>
-              <p className="text-2xl font-wroksans text-[#7A7777] mb-3">
+              <p className="text-lg md:text-2xl font-wroksans text-[#7A7777] mb-2 md:mb-3">
                 {currentSlide.location}
               </p>
             </div>
