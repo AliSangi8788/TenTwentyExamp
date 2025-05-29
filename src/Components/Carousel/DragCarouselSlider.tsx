@@ -29,7 +29,6 @@ const DragCarouselSlider: React.FC = () => {
 
   const dragThreshold: number = 40;
   const transitionDuration: number = 800;
-  const resetDelay: number = 50;
 
   // Sample slide data with client info
   const slides: Slide[] = [
@@ -56,7 +55,6 @@ const DragCarouselSlider: React.FC = () => {
   // Create infinite loop by duplicating slides
   const infiniteSlides: Slide[] = [...slides, ...slides, ...slides];
   const totalSlides: number = infiniteSlides.length;
-  const middleIndex: number = slides.length;
 
   const startAutoPlay = (): void => {
     autoPlayRef.current = setInterval(() => {
