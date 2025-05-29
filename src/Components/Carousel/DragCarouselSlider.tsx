@@ -14,6 +14,7 @@ interface SlideStyle {
   zIndex: number;
   opacity: number;
   transition: string;
+  filter: string;
 }
 
 const DragCarouselSlider: React.FC = () => {
@@ -21,9 +22,14 @@ const DragCarouselSlider: React.FC = () => {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragStart, setDragStart] = useState<number>(0);
   const [dragOffset, setDragOffset] = useState<number>(0);
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const autoPlayRef = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const transitionTimeoutRef = useRef<number | null>(null);
 
-  const dragThreshold: number = 50;
+  const dragThreshold: number = 40;
+  const transitionDuration: number = 800;
+  const resetDelay: number = 50;
 
   // Sample slide data with client info
   const slides: Slide[] = [
@@ -50,13 +56,14 @@ const DragCarouselSlider: React.FC = () => {
   // Create infinite loop by duplicating slides
   const infiniteSlides: Slide[] = [...slides, ...slides, ...slides];
   const totalSlides: number = infiniteSlides.length;
+  const middleIndex: number = slides.length;
 
   const startAutoPlay = (): void => {
     autoPlayRef.current = setInterval(() => {
-      if (!isDragging) {
-        setCurrentIndex((prev) => (prev + 1) % totalSlides);
+      if (!isDragging && !isTransitioning) {
+        handleSlideChange(1);
       }
-    }, 3000);
+    }, 4000);
   };
 
   const stopAutoPlay = (): void => {
@@ -67,19 +74,38 @@ const DragCarouselSlider: React.FC = () => {
 
   useEffect(() => {
     startAutoPlay();
-    return () => stopAutoPlay();
-  }, [isDragging, totalSlides]);
+    return () => {
+      stopAutoPlay();
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+    };
+  }, [isDragging, isTransitioning]);
 
-  // Handle infinite scroll reset
-  useEffect(() => {
-    if (currentIndex >= slides.length * 2) {
-      setTimeout(() => setCurrentIndex(slides.length), 50);
-    } else if (currentIndex < slides.length) {
-      setTimeout(() => setCurrentIndex(slides.length * 2 - 1), 50);
+  const handleSlideChange = (direction: number): void => {
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => (prev + direction + totalSlides) % totalSlides);
+    
+    // Clear any existing timeout
+    if (transitionTimeoutRef.current) {
+      clearTimeout(transitionTimeoutRef.current);
     }
-  }, [currentIndex, slides.length]);
 
-  // Mouse drag handlers
+    // Set new timeout for reset
+    transitionTimeoutRef.current = window.setTimeout(() => {
+      const newIndex = (currentIndex + direction + totalSlides) % totalSlides;
+      
+      if (newIndex >= slides.length * 2) {
+        setCurrentIndex(slides.length);
+      } else if (newIndex < slides.length) {
+        setCurrentIndex(slides.length * 2 - 1);
+      }
+      
+      setIsTransitioning(false);
+    }, transitionDuration);
+  };
+
+  // Mouse drag handlers with improved sensitivity
   const handleMouseDown = (e: React.MouseEvent): void => {
     setIsDragging(true);
     setDragStart(e.clientX);
@@ -90,20 +116,14 @@ const DragCarouselSlider: React.FC = () => {
   const handleMouseMove = (e: React.MouseEvent): void => {
     if (!isDragging) return;
     const offset = e.clientX - dragStart;
-    setDragOffset(offset);
+    setDragOffset(offset * 0.8);
   };
 
   const handleMouseUp = (): void => {
     if (!isDragging) return;
 
     if (Math.abs(dragOffset) > dragThreshold) {
-      if (dragOffset > 0) {
-        // Dragged right - go to previous
-        setCurrentIndex((prev) => (prev - 1 + totalSlides) % totalSlides);
-      } else {
-        // Dragged left - go to next
-        setCurrentIndex((prev) => (prev + 1) % totalSlides);
-      }
+      handleSlideChange(dragOffset > 0 ? -1 : 1);
     }
 
     setIsDragging(false);
@@ -111,7 +131,7 @@ const DragCarouselSlider: React.FC = () => {
     startAutoPlay();
   };
 
-  // Touch handlers for mobile
+  // Touch handlers with improved mobile experience
   const handleTouchStart = (e: React.TouchEvent): void => {
     setIsDragging(true);
     setDragStart(e.touches[0].clientX);
@@ -121,22 +141,22 @@ const DragCarouselSlider: React.FC = () => {
   const handleTouchMove = (e: React.TouchEvent): void => {
     if (!isDragging) return;
     const offset = e.touches[0].clientX - dragStart;
-    setDragOffset(offset);
+    setDragOffset(offset * 0.8);
   };
 
   const handleTouchEnd = (): void => {
     handleMouseUp();
   };
 
-  // Calculate slide positions with perspective effect
+  // Enhanced slide positioning with refined perspective effect
   const getSlideStyle = (index: number): SlideStyle => {
     const position = index - currentIndex;
     const absPosition = Math.abs(position);
 
-    // Responsive spacing based on screen size
-    const baseTranslateX = window.innerWidth < 768 ? 320 : 520;
-    const baseMargin = window.innerWidth < 768 ? 30 : 50;
-    const baseScale = window.innerWidth < 768 ? 0.8 : 1;
+    // Responsive spacing with improved scaling
+    const baseTranslateX = window.innerWidth < 768 ? 300 : 480;
+    const baseMargin = window.innerWidth < 768 ? 25 : 40;
+    const baseScale = window.innerWidth < 768 ? 0.85 : 1;
 
     let translateX: number = position * baseTranslateX;
     let scale: number = baseScale;
@@ -144,43 +164,51 @@ const DragCarouselSlider: React.FC = () => {
     let opacity: number = 1;
     let rotateY: number = 0;
     let rotateZ: number = 0;
+    let blur: number = 0;
 
     if (absPosition === 0) {
       // Center slide
       scale = baseScale;
       zIndex = 3;
       translateX += dragOffset;
+      blur = 0;
     } else if (absPosition === 1) {
-      // Adjacent slides - more pronounced rotation and margin
-      scale = baseScale;
+      // Adjacent slides
+      scale = baseScale * 0.95;
       zIndex = 2;
-      opacity = 1;
-      rotateY = position > 0 ? 25 : -25;
-      rotateZ = position > 0 ? 10 : -10;
+      opacity = 0.9;
+      rotateY = position > 0 ? 20 : -20;
+      rotateZ = position > 0 ? 5 : -5;
       translateX += dragOffset * 0.5;
       translateX += position > 0 ? baseMargin : -baseMargin;
+      blur = 0.5;
     } else if (absPosition === 2) {
       // Outer slides
-      scale = baseScale * 0.65;
+      scale = baseScale * 0.8;
       zIndex = 1;
-      opacity = 0.6;
-      rotateY = position > 0 ? 35 : -35;
-      rotateZ = position > 0 ? 8 : -8;
+      opacity = 0.7;
+      rotateY = position > 0 ? 30 : -30;
+      rotateZ = position > 0 ? 5 : -5;
       translateX += dragOffset * 0.3;
+      blur = 1;
     } else {
       // Hidden slides
-      scale = baseScale * 0.5;
+      scale = baseScale * 0.6;
       zIndex = 0;
       opacity = 0;
-      rotateY = position > 0 ? 45 : -45;
-      rotateZ = position > 0 ? 10 : -10;
+      rotateY = position > 0 ? 40 : -40;
+      rotateZ = position > 0 ? 5 : -5;
+      blur = 2;
     }
 
     return {
       transform: `translateX(${translateX}px) scale(${scale}) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`,
       zIndex: zIndex,
       opacity: opacity,
-      transition: isDragging ? "none" : "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
+      filter: `blur(${blur}px)`,
+      transition: isDragging 
+        ? "none" 
+        : `all ${transitionDuration}ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
     };
   };
 
@@ -188,7 +216,8 @@ const DragCarouselSlider: React.FC = () => {
     <div className="relative w-full h-[600px] md:h-[930px] overflow-hidden">
       {/* Carousel Container */}
       <div
-        className="relative h-full flex items-center justify-center perspective-1000"
+        ref={containerRef}
+        className="relative h-full flex items-center justify-center perspective-[2000px]"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -196,13 +225,16 @@ const DragCarouselSlider: React.FC = () => {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        style={{ cursor: isDragging ? "grabbing" : "grab" }}
+        style={{ 
+          cursor: isDragging ? "grabbing" : "grab",
+          transformStyle: "preserve-3d"
+        }}
       >
         {/* Slides */}
         {infiniteSlides.map((slide: Slide, index: number) => (
           <div
             key={`${slide.id}-${Math.floor(index / slides.length)}`}
-            className={`absolute top-10 md:top-20 w-[280px] md:w-[435px] h-[400px] md:h-[620px] select-none ${
+            className={`absolute top-10 md:top-20 w-[280px] md:w-[435px] h-[400px] md:h-[620px] select-none will-change-transform ${
               index === currentIndex ? "" : "mt-16 md:mt-28"
             }`}
             style={getSlideStyle(index)}
@@ -216,17 +248,17 @@ const DragCarouselSlider: React.FC = () => {
         ))}
       </div>
 
-      {/* Slide Details - replacing indicators */}
+      {/* Slide Details with smooth transitions */}
       <div className="absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 text-center">
         {(() => {
           const normalizedIndex: number = currentIndex % slides.length;
           const currentSlide: Slide = slides[normalizedIndex];
           return (
-            <div className="p-3 md:p-6">
-              <h2 className="text-2xl md:text-4xl font-wroksans text-black mb-1 md:mb-2">
+            <div className="p-3 md:p-6 transition-all duration-500 ease-out">
+              <h2 className="text-2xl md:text-4xl font-wroksans text-black mb-1 md:mb-2 transform transition-all duration-500">
                 {currentSlide.client}
               </h2>
-              <p className="text-lg md:text-2xl font-wroksans text-[#7A7777] mb-2 md:mb-3">
+              <p className="text-lg md:text-2xl font-wroksans text-[#7A7777] mb-2 md:mb-3 transform transition-all duration-500">
                 {currentSlide.location}
               </p>
             </div>
